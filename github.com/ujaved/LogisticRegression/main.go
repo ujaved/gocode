@@ -43,6 +43,7 @@ func getData(file *os.File) ([][]string, [][]string) {
 
 func main() {
 	fileStrPtr := flag.String("file", "", "train file location")
+	useRegularization := flag.Bool("reg", false, "use regularization")
 	flag.Parse()
 	file, err := os.Open(*fileStrPtr)
 	check(err)
@@ -53,7 +54,7 @@ func main() {
 	weights := make([]float64, numFeatures+1)
 
 	for i := 0; i < NUM_ITERATIONS; i++ {
-		weights = util.GetNewWeights(weights, trainData)
+		weights = util.GetNewWeights(weights, trainData, *useRegularization)
 	}
 	numErrors := 0
 	for _, t := range testData {

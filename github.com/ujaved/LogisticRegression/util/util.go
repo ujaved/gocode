@@ -3,11 +3,12 @@ package util
 import (
 	"log"
 	"math"
+
 	"strconv"
-        "fmt"
 )
 
 var STEP_SIZE float64 = 0.01
+var REG_PENALTY float64 = 10.0
 
 func GetLRLabel(weights []float64, X []string) int {
 	v := GetLRValue(true, weights, X)
@@ -50,7 +51,7 @@ func getPredictionErrors(weights []float64, trainingData [][]string) []float64 {
 func getNewWeight(idx int, curWeight float64, weightChan chan struct {
 	int
 	float64
-}, predictionErrors []float64, trainingData [][]string) {
+}, predictionErrors []float64, trainingData [][]string, useRegularization bool) {
 	sum := 0.0
 	for j, error := range predictionErrors {
 		if idx > 0 {
@@ -60,13 +61,16 @@ func getNewWeight(idx int, curWeight float64, weightChan chan struct {
 		sum += error
 	}
 	newWeight := curWeight + STEP_SIZE*sum
+	if useRegularization {
+		newWeight = newWeight - STEP_SIZE*REG_PENALTY*curWeight
+	}
 	weightChan <- struct {
 		int
 		float64
 	}{idx, newWeight}
 }
 
-func GetNewWeights(curWeights []float64, trainingData [][]string) []float64 {
+func GetNewWeights(curWeights []float64, trainingData [][]string, useRegularization bool) []float64 {
 
 	newWeights := make([]float64, len(curWeights))
 	predictionErrors := getPredictionErrors(curWeights, trainingData)
@@ -75,7 +79,7 @@ func GetNewWeights(curWeights []float64, trainingData [][]string) []float64 {
 		float64
 	})
 	for i, w := range curWeights {
-		go getNewWeight(i, w, weightChan, predictionErrors, trainingData)
+		go getNewWeight(i, w, weightChan, predictionErrors, trainingData, useRegularization)
 	}
 	for range newWeights {
 		pair := <-weightChan
