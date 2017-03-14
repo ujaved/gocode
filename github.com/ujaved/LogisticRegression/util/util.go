@@ -85,5 +85,6 @@ func GetNewWeights(curWeights []float64, trainingData [][]string, useRegularizat
 		pair := <-weightChan
 		newWeights[pair.int] = pair.float64
 	}
+	close(weightChan)
 	return newWeights
 }
