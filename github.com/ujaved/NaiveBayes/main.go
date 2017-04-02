@@ -59,10 +59,14 @@ func main() {
 	labelMLEs := util.GetLabelMLEs(trainData)
 
 	numErrors := 0
-	for _, t := range testData {
-		label := util.GetNBLabel(t[:len(t)-1], gaussianMeans, gaussianVariances, labelMLEs)
-		trueLabel, _ := strconv.Atoi(t[len(t)-1])
-		if label != trueLabel {
+	s := make(chan util.Info)
+	for i, t := range testData {
+		go util.GetNBLabel(t[:len(t)-1], i, gaussianMeans, gaussianVariances, labelMLEs, s)
+	}
+	for range testData {
+		info := <-s
+		trueLabel, _ := strconv.Atoi(testData[info.Idx][numFeatures])
+		if info.Label != trueLabel {
 			numErrors = numErrors + 1
 		}
 	}
